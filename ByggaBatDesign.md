@@ -1,6 +1,7 @@
 # ByggaBat — Design Document
 
 > Formerly named **BildBaut**. Renamed to **ByggaBat**.
+> v1
 
 ## 1. Purpose
 
