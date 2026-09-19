@@ -1,7 +1,5 @@
 # ByggaBat — Design Document
-
-> Formerly named **BildBaut**. Renamed to **ByggaBat**.
-> v2
+### V3
 
 ## 1. Purpose
 
@@ -45,7 +43,79 @@ interpretation skills first, writing skills second — consistent with how
 they're actually used day to day (nobody expects a junior to author an HTTP
 protocol; they need to read a response and reason about a status code).
 
-## 3. System architecture
+## 3. Mental models (the notional machine)
+
+Writing fluency was already reframed in §1 as a means to build the
+**notional machine** — the internal model a programmer holds of what the
+language is actually doing — rather than an end in itself. This section
+makes that thread explicit and gives it its own supporting structure,
+drawing on the depth-spiral mechanism described in ZCW's broader Spirals
+curriculum research (object stays fixed, resolution increases pass over
+pass, each pass opens a black box without contradicting what the student
+already believes).
+
+Applied to Python specifically, the "object" held fixed across a depth
+spiral doesn't have to be an external system (a search engine, a banking
+app) — it can be one of Python's own semantic black boxes, each revisited
+at increasing resolution as the 12 weeks progress rather than taught once
+and left behind:
+
+- **What a name refers to** — binding vs. copying, `b = a` vs.
+  `b = a.copy()`, list aliasing
+- **Mutability** — mutable default arguments, shared state via aliasing,
+  shallow vs. deep copy
+- **Scope and closures** — LEGB resolution, late-binding closures over
+  loop variables
+- **Execution / call stack** — what a traceback actually represents,
+  frame by frame
+- **Iteration and laziness** — generators, exhaustion, why a generator can
+  only be consumed once
+- **Identity vs. equality** — `is` vs. `==`, small-int/string interning
+  artifacts
+
+Each is its own small depth-spiral thread: a coarse-but-correct model
+introduced early, then reopened at higher resolution once the surrounding
+concepts exist to make the next layer make sense (e.g. late-binding
+closures only click once closures themselves are already a working idea).
+Three or four of these run as an explicit macro thread reappearing at
+increasing resolution around weeks ~2, ~5, and ~8, rather than each being
+covered once in isolation.
+
+### Misconception catalogue
+
+A sibling structure to the calibrated bug bank (§6), but targeting
+conceptual errors rather than surface-level code bugs: mutable default
+arguments, aliasing, late-binding closures, shallow/deep copy confusion,
+generator exhaustion, and similar well-documented Python misconceptions.
+Sourced the same way as the rest of the corpus (§7) — mined from real,
+well-documented "Python gotchas" collections rather than invented from
+scratch.
+
+### Mental-model-tagged bug injection
+
+Bugs in the critique/bug-injection mode (§5) get tagged by *which
+misconception they're designed to surface*, not just by difficulty. This
+gives the "findable but not obvious" calibration a principled basis:
+findable once the relevant depth-spiral pass has been taught for that
+concept, rather than an arbitrary per-week guess.
+
+### "Explain the model" checkpoints
+
+A qualitative, never percentage-scored artifact: the student describes or
+sketches what's happening in memory or execution for a given snippet —
+what do `a`, `b`, and the list they point to look like after this code
+runs? This tests whether the underlying mental model is correct, not just
+whether the student can match expected output.
+
+### Visualization in debug-companion mode
+
+Python's reference and object model is invisible by default, which is a
+large part of why it's misunderstood. Debug-companion mode (§5) should be
+able to render a simple box-and-pointer or stack-frame diagram alongside
+its Socratic hints, not just text — a real capability addition worth
+scoping separately from the base text-generation pipeline.
+
+## 4. System architecture
 
 **Base model:** small code-capable open model in the 3B–8B range —
 Qwen2.5-Coder-7B-Instruct as the leading candidate (strong Python
@@ -56,27 +126,27 @@ or DeepSeek-Coder-6.7B as fallback options if a lighter footprint is needed.
 - The 12-week project specs, rubrics, and skill checklists
 - Existing code-tracing exercise library (40 JSON files) and Expert Jigsaw
   materials
-- The calibrated bug bank (see §5)
+- The calibrated bug bank and misconception catalogue (see §3, §6)
 - Reference solutions, marked "never surface directly" except as controlled
   bug-injection source material
 
 **Mode selection** is done by the calling context, not left to the model to
 infer.
 
-## 4. Modes
+## 5. Modes
 
 ### Critique / bug-injection mode (primary)
 Takes a reference solution for the current week plus a difficulty target,
 generates a plausible variant with a flaw calibrated to be findable-but-not-
 obvious at that point in the curriculum. The student explains the bug in
 prose; ByggaBat assesses whether the explanation identifies the real issue.
-**This is the highest-risk, highest-value component — see §7.**
+**This is the highest-risk, highest-value component — see §9.**
 
 ### Debug-companion mode
 Given a failing test or error, does not supply the fix. Helps the student
 form a hypothesis and design a check that would confirm or rule it out.
 Socratic, but oriented around hypothesis-testing rather than withheld
-syntax knowledge.
+syntax knowledge. Can render mental-model diagrams alongside hints (§3).
 
 ### Reviewer mode
 Checks submitted code against the project rubric, weighted toward "would
@@ -89,9 +159,9 @@ time is spent reading/critiquing rather than authoring from scratch.
 
 ### Triage
 Routes an incoming student message to the right mode. Candidate use case
-for a typed-decision (Jev-style) classification pattern — see §6.
+for a typed-decision (Jev-style) classification pattern — see §8.
 
-## 5. Data pipeline
+## 6. Data pipeline
 
 1. Digitize the 12-week project sequence: objectives, required skills,
    common pitfalls, rubric items
@@ -99,14 +169,16 @@ for a typed-decision (Jev-style) classification pattern — see §6.
    mistakes where available, extended with LLM-generated synthetic variants,
    hand-graded for difficulty per week (only the instructor can calibrate
    this initially)
-3. Build a **rubric for grading free-text bug explanations** — partial
+3. Build a **misconception catalogue** (§3) alongside the bug bank, tagging
+   entries by which mental-model gap they target
+4. Build a **rubric for grading free-text bug explanations** — partial
    credit for identifying the symptom, full credit for the correct causal
    explanation
-4. Write worked tutoring/debug-companion transcripts as few-shot exemplars
-5. Tag all materials by week/skill so retrieval filters to what a student
+5. Write worked tutoring/debug-companion transcripts as few-shot exemplars
+6. Tag all materials by week/skill so retrieval filters to what a student
    at that point should already know
 
-## 6. Corpus sourcing, real bug-mining, and the one-shot litmus test
+## 7. Corpus sourcing, real bug-mining, and the one-shot litmus test
 
 A frontier LLM can one-shot a typical week's assignment in under a minute.
 Rather than fight this, it's treated as a signal about what shouldn't be
@@ -135,7 +207,7 @@ needs and a synthetic toy problem can't teach.
 
 ### Mine real bugs instead of inventing them
 
-Strengthens the calibrated bug bank (§5) by mining before/after diffs from
+Strengthens the calibrated bug bank (§6) by mining before/after diffs from
 real bug-fix commits in open-source repos, rather than relying solely on
 LLM-generated synthetic flaws:
 
@@ -147,7 +219,7 @@ LLM-generated synthetic flaws:
 - Free gold-standard answers for the free-text explanation rubric — the
   actual commit message and fix often *is* the correct explanation
 
-Synthetic bug-injection from §4 still has a role, for producing fresh
+Synthetic bug-injection from §5 still has a role, for producing fresh
 variants calibrated to a specific week's target skill, but its patterns
 should be modeled on what's mined from real fixes rather than invented
 from nothing.
@@ -172,13 +244,13 @@ exercise itself is designed so an isolated solution isn't the deliverable:
 ### Pipeline addition
 
 A corpus curation and licensing step precedes the existing data pipeline
-(§5): selecting source repos, checking license compatibility for
+(§6): selecting source repos, checking license compatibility for
 educational reuse and redistribution to students, and building a tagging
 taxonomy (comprehensions, decorators, context managers, generators, class
 composition, error handling, common stdlib usage) so retrieval can pull
 material at the right complexity and idiom for a given week.
 
-## 7. Notes on LocalJev / Jev pattern
+## 8. Notes on LocalJev / Jev pattern
 
 [LocalJev](https://github.com/githubnext/localjev) is a githubnext
 experimental bridge implementing the Jev typed-decision protocol
@@ -194,14 +266,14 @@ worth reusing — typed, scored questions instead of freeform grading prompts
 plain structured-output prompts against whichever model ByggaBat already
 uses, rather than as a dependency on LocalJev itself.
 
-## 8. Primary risk
+## 9. Primary risk
 
 Grading a student's free-text bug explanation reliably is a harder problem
 than generating the bug itself. This should be prototyped and stress-tested
 early, against real or newly collected student explanations, before
 committing to critique/bug-injection as ByggaBat's centerpiece mode.
 
-## 9. Deployment
+## 10. Deployment
 
 Undecided — build and validate standalone first (faster iteration, no
 coupling to the Horizon LMS release cycle), then integrate into Horizon LMS
@@ -209,11 +281,12 @@ once prompts/retrieval/grading are proven. Horizon LMS integration adds
 real value to reviewer mode specifically, since it can pull the actual
 rubric for the actual project and track completion in place.
 
-## 10. Build phases
+## 11. Build phases
 
 1. Digitize project specs/rubrics; curate initial corpus sources and check
-   licensing (§6); build the calibrated bug bank for the first 2–3 projects
-   from mined real fixes plus hand-graded synthetic variants
+   licensing (§7); build the calibrated bug bank and misconception
+   catalogue for the first 2–3 projects from mined real fixes plus
+   hand-graded synthetic variants
 2. Stand up base model + RAG; build bug-injection mode first; small eval
    set testing whether it produces bugs a target-week student should catch
    but not trivially
