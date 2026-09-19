@@ -1,7 +1,7 @@
 # ByggaBat — Design Document
 
 > Formerly named **BildBaut**. Renamed to **ByggaBat**.
-> v1
+> v2
 
 ## 1. Purpose
 
@@ -106,7 +106,79 @@ for a typed-decision (Jev-style) classification pattern — see §6.
 5. Tag all materials by week/skill so retrieval filters to what a student
    at that point should already know
 
-## 6. Notes on LocalJev / Jev pattern
+## 6. Corpus sourcing, real bug-mining, and the one-shot litmus test
+
+A frontier LLM can one-shot a typical week's assignment in under a minute.
+Rather than fight this, it's treated as a signal about what shouldn't be
+the deliverable anymore — and as a reason to source exercises from real,
+existing Python at scale rather than hand-authoring synthetic toy problems.
+
+### Widen the corpus
+
+Pull exercise and reading material from real, permissively-licensed Python
+that already exists, instead of authoring everything from scratch:
+
+- **Standard library source** — `itertools`, `collections`, `pathlib`,
+  `argparse` — well-written, readable, and exactly the idioms students
+  will meet in real jobs
+- **Small, well-scoped open-source libraries** (MIT/BSD/Apache licensed) —
+  `requests`, `click`, contained modules from larger projects — for
+  reading, tracing, and critique exercises
+- **Public tutorial corpora and code datasets** (e.g. CodeSearchNet-style
+  collections, freeCodeCamp's BSD-licensed curriculum) as a scalable,
+  pre-tagged source of graded examples
+
+This gives effectively unlimited, non-repeating material across cohorts,
+and exposes students to real quality variation — good idioms next to
+mediocre ones — which is the discernment a working programmer actually
+needs and a synthetic toy problem can't teach.
+
+### Mine real bugs instead of inventing them
+
+Strengthens the calibrated bug bank (§5) by mining before/after diffs from
+real bug-fix commits in open-source repos, rather than relying solely on
+LLM-generated synthetic flaws:
+
+- A realistic bug distribution — off-by-ones, wrong comparison operators,
+  mutable-default-argument traps, scope errors — instead of whatever
+  pattern a model decides to inject
+- A much larger raw pool to hand-grade for difficulty than could be
+  authored directly
+- Free gold-standard answers for the free-text explanation rubric — the
+  actual commit message and fix often *is* the correct explanation
+
+Synthetic bug-injection from §4 still has a role, for producing fresh
+variants calibrated to a specific week's target skill, but its patterns
+should be modeled on what's mined from real fixes rather than invented
+from nothing.
+
+### Design exercises to resist one-shotting
+
+Since LLMs can solve isolated, self-contained problems near-instantly, the
+exercise itself is designed so an isolated solution isn't the deliverable:
+
+- **Ground exercises in a real file or module**, not a floating problem
+  statement — e.g. trace what happens when a specific real config-parsing
+  function is called, so the deliverable is understanding *that* code, not
+  producing a generic solution
+- **Require justification alongside any working code** — tests written, an
+  execution trace, a rationale for a design choice — so correct output
+  alone earns no credit
+- **One-shot litmus test for any new exercise:** if a frontier model can
+  one-shot it with zero explanation and that constitutes a complete,
+  gradeable answer, it isn't a ByggaBat exercise — it's either raw-material
+  reading practice, or it needs a critique/explain layer added before use
+
+### Pipeline addition
+
+A corpus curation and licensing step precedes the existing data pipeline
+(§5): selecting source repos, checking license compatibility for
+educational reuse and redistribution to students, and building a tagging
+taxonomy (comprehensions, decorators, context managers, generators, class
+composition, error handling, common stdlib usage) so retrieval can pull
+material at the right complexity and idiom for a given week.
+
+## 7. Notes on LocalJev / Jev pattern
 
 [LocalJev](https://github.com/githubnext/localjev) is a githubnext
 experimental bridge implementing the Jev typed-decision protocol
@@ -122,14 +194,14 @@ worth reusing — typed, scored questions instead of freeform grading prompts
 plain structured-output prompts against whichever model ByggaBat already
 uses, rather than as a dependency on LocalJev itself.
 
-## 7. Primary risk
+## 8. Primary risk
 
 Grading a student's free-text bug explanation reliably is a harder problem
 than generating the bug itself. This should be prototyped and stress-tested
 early, against real or newly collected student explanations, before
 committing to critique/bug-injection as ByggaBat's centerpiece mode.
 
-## 8. Deployment
+## 9. Deployment
 
 Undecided — build and validate standalone first (faster iteration, no
 coupling to the Horizon LMS release cycle), then integrate into Horizon LMS
@@ -137,10 +209,11 @@ once prompts/retrieval/grading are proven. Horizon LMS integration adds
 real value to reviewer mode specifically, since it can pull the actual
 rubric for the actual project and track completion in place.
 
-## 9. Build phases
+## 10. Build phases
 
-1. Digitize project specs/rubrics; build the calibrated bug bank for the
-   first 2–3 projects, hand-graded for difficulty
+1. Digitize project specs/rubrics; curate initial corpus sources and check
+   licensing (§6); build the calibrated bug bank for the first 2–3 projects
+   from mined real fixes plus hand-graded synthetic variants
 2. Stand up base model + RAG; build bug-injection mode first; small eval
    set testing whether it produces bugs a target-week student should catch
    but not trivially
