@@ -170,7 +170,31 @@ language ("No class, no file I/O yet — this section is deliberately
 syntax-only," from `_index.md`) should narrow to "no file *writing* yet,"
 since reading is now in scope right after Video 2.
 
-## 6. Implication for ByggaBat
+## 6. The prerequisite Workbench, and the `json` hook it sets up
+
+Entry state for this whole section, from `_index.md`: "Developer's
+Workbench complete." That course's own capstone (Videos 19–20) deliberately
+extracts JSON data with `grep -o`, framed explicitly as "the hard way, on
+purpose — and the first honest look at why a real parser is worth wanting
+later." That's a direct, already-authored setup this section should cash
+in rather than let go stale.
+
+Since JSON's concepts (five types, nesting, exact grammar) are already
+fully known going into Python, `json.loads`/`json.dumps` don't need to
+wait for a natural "we need this" moment the way a fresh concept would —
+they're pure syntax-transfer onto something already understood, and the
+motivating hook is already sitting there. Right after Video 3 (dicts) is
+the natural placement: a JSON object maps directly onto a dict, so showing
+`json.loads('{"name": "Joe'\''s Pizza", "rating": 4.5}')` immediately after
+dicts are introduced lets the mapping do the explaining, and can open with
+a direct callback: "Remember the Workbench capstone, doing this with
+`grep`? Here's the tool that was worth wanting."
+
+This also means the earlier placement suggestion in DESIGN.md's topic
+table (§3) — `json.loads`/`json.dumps` at weeks 3–4 — should be read as
+*this* specific moment, not a loose week-level suggestion.
+
+## 7. Implication for ByggaBat
 
 - Retrieval and the bug bank / misconception catalogue (DESIGN.md §6–7)
   should tag material by *which video/slide first taught the relevant
@@ -189,3 +213,8 @@ since reading is now in scope right after Video 2.
   worked exemplar should be, literally, the `backup = ratings` /
   `backup.append(100)` example from Video 3 — already the canonical
   instance in this student's mental model, not a new one to build fresh.
+- The same video-tagging principle should extend one course earlier: a
+  hint touching HTTP, JSON, git, or shell can cite the Developer's
+  Workbench video that already taught it ("like the merge conflict from
+  Workbench Video 8") instead of re-explaining the concept — since, per
+  §6, those four are genuinely prior knowledge here, not new material.

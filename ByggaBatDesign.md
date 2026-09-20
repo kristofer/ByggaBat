@@ -1,6 +1,6 @@
 # ByggaBat — Design Document
 
-> v4
+v6
 
 ## 1. Purpose
 
@@ -20,6 +20,30 @@ practice is retained, but reframed as a *means* to build the "notional
 machine" (an internal execution model of the language), not the end goal
 of the curriculum.
 
+### Prerequisite: the Developer's Workbench
+
+Python Course 1 assumes a shorter prerequisite course, the Developer's
+Workbench (20 videos), is already complete. It's the first concepts ledger
+in the whole program, and every later course — Python, Java, and Go alike
+— assumes everything in it is already in hand and never re-logs it. It
+covers, in order: shell (filesystem, redirection, piping, scripts, exit
+codes, `$PATH`), git (repository through branching, merge conflicts read
+as "git asking a person to decide," `diff`, `stash`, pull requests), HTTP
+and JSON (request/response, verbs, status codes, idempotency, all five
+JSON types, nesting, exact grammar) via real `curl` traffic rather than
+abstraction, then regex, tool installation (Homebrew, with an explicit
+"machine-wide tool vs. project dependency" distinction), and Markdown.
+
+This matters directly to how four of the five "beginner" auxiliary skills
+below are scoped: shell, git, HTTP, and JSON are **not introduced by the
+Python curriculum at all** — students already hold the concepts. Python's
+job for those four is syntax-transfer onto knowledge already in place
+("you already know what a `POST` does; here's how you send one from
+Python"), not concept-teaching. **SQL is the one exception** — nothing in
+the Workbench covers it, so Python Course 1 is where SQL is genuinely
+taught from first principles, and it should be scoped with the same care
+as any other new topic, unlike the other four.
+
 ## 2. Skill progression (redrafted)
 
 The ratio of hands-on writing to reading/debugging/review shifts steadily
@@ -27,10 +51,10 @@ across the 12 weeks:
 
 | Weeks | Focus | Writing : Reading+Debugging+Review |
 |---|---|---|
-| 1–2 | Build the notional machine — core syntax, trace-before-run, shell/git basics | ~70:30 |
-| 3–4 | Transition — functions/OOP/file I/O, debugging formalized, JSON as a reading skill first | ~50:50 |
-| 5–6 | Reading/debugging dominant — SQL and HTTP introduced as reading skills, debug-by-hypothesis formalized, first code review exercises | ~30:70 |
-| 7–8 | Decomposition and verification — vague-problem decomposition, tests used to check AI-generated code, git PR/review workflow | ~20:80 |
+| 1–2 | Build the notional machine — core syntax, trace-before-run | ~70:30 |
+| 3–4 | Transition — functions/OOP/file I/O, debugging formalized, `json` module as the payoff for a Workbench hook (§3) | ~50:50 |
+| 5–6 | Reading/debugging dominant — SQL introduced fresh (no prerequisite coverage), HTTP applied via Python syntax onto concepts already known, debug-by-hypothesis formalized, first code review exercises | ~30:70 |
+| 7–8 | Decomposition and verification — vague-problem decomposition, tests used to check AI-generated code, git workflow applied to a real project (not taught fresh — see §3) | ~20:80 |
 | 9–10 | Unfamiliar codebases — modify code they didn't write, subtler bug-injection challenges, peer review as core activity | reading/review-dominant |
 | 11–12 | Capstone — built with LLM assistance throughout, but every stage requires artifacts proving comprehension | reading/review-dominant |
 
@@ -39,10 +63,12 @@ before coding, tests that verify LLM-generated code, a code-review writeup
 of their own AI-assisted output, and one documented case of catching and
 fixing a subtly wrong AI suggestion.
 
-Beginner skills (SQL, HTTP, JSON, git, shell) are treated as reading/
-interpretation skills first, writing skills second — consistent with how
-they're actually used day to day (nobody expects a junior to author an HTTP
-protocol; they need to read a response and reason about a status code).
+Beginner skills (SQL, HTTP, JSON, git, shell): SQL is treated as reading
+skill first, writing second, exactly as originally planned, since it has
+no prerequisite coverage. HTTP, JSON, git, and shell are different — the
+Workbench already brought all four to working fluency before Python
+starts, so Python's role is applying that existing fluency in Python
+syntax, not building it from scratch.
 
 ## 3. Mental models (the notional machine)
 
@@ -86,18 +112,19 @@ covered once in isolation.
 
 Language topics sequenced against the week bands from §2, tagged **W**
 (write-list — must author from scratch) or **R** (read-list — must
-recognize and not be confused by; authorship not required). SQL, HTTP,
-JSON, git, and shell stay as already scoped in §2; this table covers
-Python-language topics specifically, sequenced to match that same
-reading-before-writing shift.
+recognize and not be confused by; authorship not required). Given the
+Developer's Workbench prerequisite (§1), shell and git appear in this
+table only where Python-specific syntax needs teaching (module imports,
+`subprocess`, packaging) — the underlying concepts aren't introduced here.
+SQL is the one auxiliary skill genuinely new to this curriculum.
 
 | Weeks | Core language | Data structures | OOP / structure | Errors & I/O |
 |---|---|---|---|---|
-| 1–2 | Variables & names, types (int/float/bool/str/None), operators, `if`/`elif`/`else`, `while`, `for` **[W]** | Lists, indexing/slicing basics **[W]** | — | `print`/`input`, reading a traceback **[R→W]** |
-| 3–4 | Functions (def, params, return, defaults), scope basics (local vs. global) **[W]** | Dicts, tuples, sets; nested structures **[W]** | — | `try`/`except` basics **[W]**; `open()`/file read-write **[W]** |
-| 5–6 | f-strings, comprehensions (read first, then write), ternary expressions **[R→W]** | List/dict comprehensions **[W]**; `collections` module (`Counter`, `defaultdict`) **[R]** | Classes: `__init__`, attributes, methods **[W]** | Custom exceptions, `finally` **[W]**; context managers (`with`) **[R→W]** |
-| 7–8 | `*args`/`**kwargs` **[R]**; lambda **[R]**; closures **[R]** | Instance vs. class attributes, basic inheritance **[W]** | Modules & packages, imports, `if __name__ == "__main__"` **[W]** | Logging basics **[R]**; `assert` / test-writing **[W]** |
-| 9–10 | Decorators **[R]**; generators & `yield` **[R]**; magic/dunder methods beyond `__init__`/`__str__` **[R]** | Multiple inheritance / mixins **[R]** | Package structure across multiple files **[W]** | `pytest` basics **[W]**; virtual environments, `requirements.txt` **[W]** |
+| 1–2 | Variables & names, types (int/float/bool/str/None), operators, `if`/`elif`/`else`, `while`, `for` **[W]** | Lists, indexing/slicing basics **[W]** | — | `print`/`input`, reading a traceback **[R→W]**; reading a text file (`with`, `for line in f`) **[R]** |
+| 3–4 | Functions (def, params, return, defaults), scope basics (local vs. global) **[W]** | Dicts, tuples, sets; nested structures **[W]** | — | `try`/`except` basics **[W]**; `open()`/file read-write **[W]**; `json.loads`/`json.dumps` **[W]** — syntax only, concepts already known from the Workbench (§1) |
+| 5–6 | f-strings, comprehensions (read first, then write), ternary expressions **[R→W]** | List/dict comprehensions **[W]**; `collections` module (`Counter`, `defaultdict`) **[R]** | Classes: `__init__`, attributes, methods **[W]** | Custom exceptions, `finally` **[W]**; context managers (`with`) **[R→W]**; SQL — genuinely new, read first **[R]** |
+| 7–8 | `*args`/`**kwargs` **[R]**; lambda **[R]**; closures **[R]**; `re` module **[R]** — pattern concepts already known from the Workbench | Instance vs. class attributes, basic inheritance **[W]** | Modules & packages, imports, `if __name__ == "__main__"` **[W]** | Logging basics **[R]**; `assert` / test-writing **[W]**; `requests` library **[R]** — HTTP concepts already known |
+| 9–10 | Decorators **[R]**; generators & `yield` **[R]**; magic/dunder methods beyond `__init__`/`__str__` **[R]** | Multiple inheritance / mixins **[R]** | Package structure across multiple files **[W]** | `pytest` basics **[W]**; virtual environments, `requirements.txt` **[W]** — pip's version of the Homebrew tool-vs-dependency distinction already known |
 | 11–12 | Type hints **[R]**; `async`/`await` (recognize only) **[R]** | — | Reading unfamiliar module structure **[R]** | Reading production-style logging & error handling **[R]** |
 
 ### The notional machine, by week band
@@ -135,9 +162,23 @@ instead of copied values) at every level described here.
    A traceback at this resolution reads as "where was the pointer when
    everything stopped," not yet a full call-stack diagnostic.
 
+**Read-only text I/O, introduced early, as a second block-syntax instance.**
+`with open("reviews.txt") as f: for line in f: ...` fits as soon as
+proposition 1 exists — it needs `for` and strings, nothing else. Its value
+here isn't the file access itself; it's that `with` gives students a fourth
+block (alongside `if`/`while`/`for`) that shares the identical `:` +
+indented-suite shape but, unlike the other three, does not redirect the
+instruction pointer — a useful early counter-example that "block syntax"
+and "control flow" aren't the same idea, seen cheaply now rather than
+sprung as a surprise once `with`'s real mechanics (proposition 13) open in
+weeks 5–8. `for line in f` is also a second iteration domain (files, not
+just lists) at negligible cost — a small early rep toward the general
+iteration protocol (proposition 17, weeks 9–12).
+
 *Deliberately closed at this level:* generators/laziness, decorators, full
 LEGB scope beyond local-vs-global, closures, multiple inheritance, deep
-copy, comprehension internals.
+copy, comprehension internals, the context-manager protocol behind `with`
+(proposition 13) — `with` is used here, not yet explained.
 
 #### Weeks 5–8 — opening specific boxes
 
@@ -222,10 +263,14 @@ mental model, versus memorizing each as its own topic.
 23. **Environments and `import` resolution are a genuinely separate black
     box** — not part of the execution model at all. `sys.path` and
     installed packages decide what a module name resolves to *before* any
-    frame/object machinery runs. Worth naming explicitly as a different
-    kind of box, since students otherwise fold it into "more Python syntax"
-    and get confused when identical code behaves differently across
-    environments.
+    frame/object machinery runs. This has a direct pre-existing scaffold:
+    the Developer's Workbench already teaches the Homebrew distinction —
+    "what does this machine have" vs. "what does this project depend on"
+    — so `pip`/`venv` should be introduced explicitly as that same
+    distinction's Python-specific instance, not a new concept. Worth
+    naming the box regardless, since students otherwise fold it into
+    "more Python syntax" and get confused when identical code behaves
+    differently across environments.
 24. **Type hints are metadata, not enforcement** — stated as an explicit
     negative, since the natural wrong assumption (especially from prior
     exposure to a statically-typed language) is that they behave like one.
