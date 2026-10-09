@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} · ByggaBat</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">ByggaBat</a>
+    <nav><a href="/">Student practice</a><a href="/instructor">Instructor</a></nav>
+  </header>
+  <main>
+    <p><a class="back-link" href="/">← All exercises</a></p>
+    <div class="tag">{{.Level}} · Week {{.Week}} · {{.Skill}}</div>
+    <h1>{{.Title}}</h1>
+    <p class="exercise-prompt">{{.Prompt}}</p>
+    <h2>Read the code</h2>
+    <pre class="code"><code>{{.Code}}</code></pre>
+    <section class="work-panel">
+      <h2>Your work</h2>
+      <p>Choose how you want to work with this example, then explain your thinking or share a proposed change.</p>
+      <form hx-post="/attempts" hx-target="#feedback" hx-swap="innerHTML">
+        <input type="hidden" name="exercise_id" value="{{.ID}}">
+        <label for="student">Your name <span class="optional">(optional)</span></label>
+        <input id="student" name="student" maxlength="80" placeholder="Name">
+        <label for="mode">Mode</label>
+        <select id="mode" name="mode">
+          <option value="diagnose">Diagnose — explain the bug</option>
+          <option value="tutor">Tutor — get a Socratic hint</option>
+          <option value="review">Code review — review a proposed change</option>
+        </select>
+        <label for="response">Your explanation, question, or proposed code</label>
+        <textarea id="response" name="response" rows="6" maxlength="8000" required placeholder="What do you notice? What would you test?"></textarea>
+        <button type="submit">Get feedback</button>
+      </form>
+      <div id="feedback" aria-live="polite"></div>
+    </section>
+  </main>
+  <footer>Hints are designed to support your reasoning, not replace it.</footer>
+</body>
+</html>

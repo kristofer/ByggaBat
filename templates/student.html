@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ByggaBat · Student practice</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">ByggaBat</a>
+    <nav><a href="/">Student practice</a><a href="/instructor">Instructor</a></nav>
+  </header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">Read · reason · review</p>
+      <h1>Practice finding what code gets wrong.</h1>
+      <p>Start with a short Python example, then explore larger codebases. Explain your reasoning; the goal is understanding, not just the answer.</p>
+    </section>
+    <h2>Beginner examples</h2>
+    <div class="exercise-grid">
+      {{range .}}{{if eq .Level "Beginner"}}
+      <a class="exercise-card" href="/exercises/{{.ID}}">
+        <span class="tag">Week {{.Week}} · {{.Skill}}</span>
+        <h3>{{.Title}}</h3>
+        <p>{{.Prompt}}</p>
+        <span class="card-link">Open exercise →</span>
+      </a>
+      {{end}}{{end}}
+    </div>
+    <h2>Medium codebases</h2>
+    <p class="section-note">Read each small module as a whole. Use a tutor hint, diagnose the flaw, or review a proposed change.</p>
+    <div class="exercise-grid">
+      {{range .}}{{if or (eq .Level "Medium") (eq .Level "Instructor generated")}}
+      <a class="exercise-card" href="/exercises/{{.ID}}">
+        <span class="tag">{{.Level}} · Week {{.Week}} · {{.Skill}}</span>
+        <h3>{{.Title}}</h3>
+        <p>{{.Prompt}}</p>
+        <span class="card-link">Open codebase →</span>
+      </a>
+      {{end}}{{end}}
+    </div>
+  </main>
+  <footer>ByggaBat · Python reading and debugging practice</footer>
+</body>
+</html>

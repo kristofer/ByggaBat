@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} · Instructor notes</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">ByggaBat</a>
+    <nav><a href="/">Student practice</a><a href="/instructor">Instructor</a></nav>
+  </header>
+  <main>
+    <p><a class="back-link" href="/instructor">← Instructor workspace</a></p>
+    <div class="tag">{{.Level}} · Week {{.Week}} · {{.Skill}}</div>
+    <h1>{{.Title}}</h1>
+    <h2>Student prompt</h2>
+    <p>{{.Prompt}}</p>
+    <h2>Flawed code</h2>
+    <pre class="code"><code>{{.Code}}</code></pre>
+    <section class="instructor-note">
+      <h2>Instructor-only hint</h2>
+      <p>{{.Hint}}</p>
+      <h2>Expected diagnosis</h2>
+      <p>{{.Solution}}</p>
+    </section>
+  </main>
+  <footer>Instructor notes are not shown in the student exercise view.</footer>
+</body>
+</html>

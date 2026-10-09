@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Instructor · ByggaBat</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">ByggaBat</a>
+    <nav><a href="/">Student practice</a><a href="/instructor">Instructor</a></nav>
+  </header>
+  <main>
+    <section class="intro compact">
+      <p class="eyebrow">Instructor workspace</p>
+      <h1>Exercises and student work</h1>
+      <p>Review the seeded bug bank, inspect instructor notes, and generate a calibrated variant from a reference solution.</p>
+    </section>
+    <section class="work-panel">
+      <h2>Generate a flawed variant</h2>
+      <p>Provide a reference solution and target skill. ByggaBat asks Anthropic to introduce one plausible bug and returns an instructor-reviewed exercise.</p>
+      <form hx-post="/instructor/generate" hx-target="#generate-feedback" hx-swap="innerHTML">
+        <label for="week">Target curriculum week</label>
+        <input id="week" name="week" type="number" min="1" max="12" value="5" required>
+        <label for="skill">Skill to practice</label>
+        <input id="skill" name="skill" maxlength="120" required placeholder="e.g. mutable default arguments">
+        <label for="reference">Reference Python code</label>
+        <textarea id="reference" name="reference" rows="8" maxlength="12000" required placeholder="Paste a reference solution to adapt"></textarea>
+        <button type="submit">Generate exercise</button>
+      </form>
+      <div id="generate-feedback" aria-live="polite"></div>
+    </section>
+
+    <h2>Bug bank <span class="count">{{len .Exercises}}</span></h2>
+    <div class="exercise-grid">
+      {{range .Exercises}}
+      <a class="exercise-card" href="/instructor/exercises/{{.ID}}">
+        <span class="tag">{{.Level}} · Week {{.Week}}</span>
+        <h3>{{.Title}}</h3>
+        <p>{{.Skill}}</p>
+        <span class="card-link">View instructor notes →</span>
+      </a>
+      {{end}}
+    </div>
+
+    <h2>Recent student activity <span class="count">{{len .Attempts}}</span></h2>
+    {{if .Attempts}}
+    <div class="activity-list">
+      {{range .Attempts}}
+      <article class="activity-card">
+        <div class="activity-heading"><strong>{{.Student}}</strong><span>{{.Created}}</span></div>
+        <p><span class="tag">{{.Mode}}</span> · {{.Title}}</p>
+        <details><summary>Student response and feedback</summary>
+          <h4>Response</h4><p class="pre-wrap">{{.Response}}</p>
+          <h4>Feedback</h4><p class="pre-wrap">{{.Feedback}}</p>
+        </details>
+      </article>
+      {{end}}
+    </div>
+    {{else}}
+    <p class="empty-state">Student attempts will appear here after they submit work.</p>
+    {{end}}
+  </main>
+  <footer>Instructor view · Recent 50 attempts</footer>
+</body>
+</html>
