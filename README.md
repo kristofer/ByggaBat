@@ -15,6 +15,8 @@ Open [http://localhost:8080](http://localhost:8080). The database is created as 
 
 The app seeds three beginner examples and five medium-sized Python codebases on first startup. Diagnose, tutor, review, and exercise generation use the Anthropic Messages API. Attempts are saved for the instructor view at `/instructor`. The prototype has no authentication; run it only in a trusted local environment and configure a valid Anthropic API key for AI features.
 
+Evaluation requests (diagnose, tutor, and review) include a preamble and postamble that constrain the model to assessing reasoning about the current exercise and treat submitted content as untrusted data. The defaults are maintained as `defaultEvaluationPromptPreamble` and `defaultEvaluationPromptPostamble` in `anthropic.go`; set `EVALUATION_PROMPT_PREAMBLE` or `EVALUATION_PROMPT_POSTAMBLE` to override them for deployment. These additions are prompt-level safeguards, not a guarantee against prompt injection. Exercise generation does not use these evaluation boundaries.
+
 ## Import problems
 
 In the instructor workspace, upload a `.json` file containing an array of problems. Each problem must have a unique `title`, `level`, positive integer `week`, `skill`, `prompt`, `code`, `hint`, and `solution`, for example:
