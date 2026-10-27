@@ -33,6 +33,19 @@
       <div id="generate-feedback" aria-live="polite"></div>
     </section>
 
+    <section class="work-panel">
+      <h2>Load problems from JSON</h2>
+      <p>Upload a JSON array of problems. A problem with a title already in the bug bank will be skipped.</p>
+      <form action="/instructor/import" method="post" enctype="multipart/form-data">
+        <label for="problem-file">Problem JSON file (up to 1 MB)</label>
+        <input id="problem-file" name="file" type="file" accept="application/json,.json" required>
+        <button type="submit">Import problems</button>
+      </form>
+      {{if .ShowImportResult}}
+      <p class="feedback" role="status">Imported {{.Imported}} new problem{{if ne .Imported 1}}s{{end}}. Existing titles were skipped.</p>
+      {{end}}
+    </section>
+
     <h2>Bug bank <span class="count">{{len .Exercises}}</span></h2>
     <div class="exercise-grid">
       {{range .Exercises}}

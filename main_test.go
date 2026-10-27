@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -186,5 +188,107 @@ func TestInstructorCanGenerateStudentExercise(t *testing.T) {
 	a.routes().ServeHTTP(student, httptest.NewRequest(http.MethodGet, "/", nil))
 	if !strings.Contains(student.Body.String(), "Generated trace") {
 		t.Fatal("generated exercise did not appear in student practice")
+	}
+}
+
+func TestInstructorImportsProblemsIdempotently(t *testing.T) {
+	a, db := testApp(t)
+	server := a.routes()
+	problemJSON := `[{
+		"title":"Imported example","level":"Beginner","week":4,"skill":"Loops",
+		"prompt":"Find the bug.","code":"  print(1)","hint":"Trace it.","solution":"Fix the loop."
+	}]`
+
+	for attempt := 0; attempt < 2; attempt++ {
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+		file, err := writer.CreateFormFile("file", "problems.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := io.WriteString(file, problemJSON); err != nil {
+			t.Fatal(err)
+		}
+		if err := writer.Close(); err != nil {
+			t.Fatal(err)
+		}
+		request := httptest.NewRequest(http.MethodPost, "/instructor/import", &body)
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+		if response.Code != http.StatusSeeOther {
+			t.Fatalf("import attempt %d returned %d: %s", attempt+1, response.Code, response.Body.String())
+		}
+		want := "/instructor?imported=1"
+		if attempt == 1 {
+			want = "/instructor?imported=0"
+		}
+		if response.Header().Get("Location") != want {
+			t.Fatalf("import attempt %d redirected to %q; want %q", attempt+1, response.Header().Get("Location"), want)
+		}
+	}
+
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM exercises WHERE title = 'Imported example'`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("imported %d copies of the problem; want 1", count)
+	}
+	var code string
+	if err := db.QueryRow(`SELECT code FROM exercises WHERE title = 'Imported example'`).Scan(&code); err != nil {
+		t.Fatal(err)
+	}
+	if code != "  print(1)" {
+		t.Fatalf("imported code = %q; want its leading whitespace preserved", code)
+	}
+	page := httptest.NewRecorder()
+	server.ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/instructor?imported=1", nil))
+	if !strings.Contains(page.Body.String(), "Imported example") ||
+		!strings.Contains(page.Body.String(), "Imported 1 new problem.") {
+		t.Fatal("instructor page is missing the imported problem or confirmation")
+	}
+	reimportPage := httptest.NewRecorder()
+	server.ServeHTTP(reimportPage, httptest.NewRequest(http.MethodGet, "/instructor?imported=0", nil))
+	if !strings.Contains(reimportPage.Body.String(), "Imported 0 new problems.") {
+		t.Fatal("instructor page is missing confirmation for a re-import")
+	}
+}
+
+func TestInstructorRejectsInvalidProblemJSON(t *testing.T) {
+	a, db := testApp(t)
+	problemJSON := `[{
+		"title":"Valid first","level":"Beginner","week":1,"skill":"Lists",
+		"prompt":"Prompt","code":"print(1)","hint":"Hint","solution":"Solution"
+	},{
+		"title":"Missing skill","level":"Beginner","week":1,
+		"prompt":"Prompt","code":"print(1)","hint":"Hint","solution":"Solution"
+	}]`
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	file, err := writer.CreateFormFile("file", "problems.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.WriteString(file, problemJSON); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	request := httptest.NewRequest(http.MethodPost, "/instructor/import", &body)
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	response := httptest.NewRecorder()
+	a.routes().ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("invalid import returned %d; want 400", response.Code)
+	}
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM exercises WHERE title IN ('Valid first', 'Missing skill')`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatalf("invalid file partially imported %d problems", count)
 	}
 }
