@@ -15,6 +15,27 @@ Open [http://localhost:8080](http://localhost:8080). The database is created as 
 
 The app seeds three beginner examples and five medium-sized Python codebases on first startup. Diagnose, tutor, review, and exercise generation use the Anthropic Messages API. Attempts are saved for the instructor view at `/instructor`. The prototype has no authentication; run it only in a trusted local environment and configure a valid Anthropic API key for AI features.
 
+## Import problems
+
+In the instructor workspace, upload a `.json` file containing an array of problems. Each problem must have a unique `title`, `level`, positive integer `week`, `skill`, `prompt`, `code`, `hint`, and `solution`, for example:
+
+```json
+[
+  {
+    "title": "An empty ratings list",
+    "level": "Beginner",
+    "week": 1,
+    "skill": "Lists and edge cases",
+    "prompt": "Explain why this function fails for an empty list.",
+    "code": "def average(ratings):\n    return sum(ratings) / len(ratings)",
+    "hint": "What is the length of an empty list?",
+    "solution": "Check for an empty list before dividing."
+  }
+]
+```
+
+Imports are limited to 1 MB. Titles identify problems: importing a title that already exists skips it without changing the existing problem, so re-uploading a file is safe.
+
 ## Run with Docker
 
 Requirements: Docker with the Compose plugin.

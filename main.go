@@ -94,6 +94,7 @@ func (a *app) routes() http.Handler {
 	mux.HandleFunc("GET /instructor", a.instructorHome)
 	mux.HandleFunc("GET /instructor/exercises/{id}", a.instructorExercise)
 	mux.HandleFunc("POST /instructor/generate", a.generateExercise)
+	mux.HandleFunc("POST /instructor/import", a.importProblems)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	return mux
 }
@@ -195,10 +196,13 @@ func (a *app) instructorHome(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not load student activity", http.StatusInternalServerError)
 		return
 	}
+	imported, _ := strconv.Atoi(r.URL.Query().Get("imported"))
 	a.render(w, "instructor.html", struct {
-		Exercises []Exercise
-		Attempts  []Attempt
-	}{exercises, attempts})
+		Exercises        []Exercise
+		Attempts         []Attempt
+		Imported         int
+		ShowImportResult bool
+	}{exercises, attempts, max(0, imported), r.URL.Query().Has("imported")})
 }
 
 func (a *app) instructorExercise(w http.ResponseWriter, r *http.Request) {
@@ -250,6 +254,28 @@ func (a *app) generateExercise(w http.ResponseWriter, r *http.Request) {
 	generated.ID, _ = result.LastInsertId()
 	w.Header().Set("HX-Redirect", fmt.Sprintf("/exercises/%d", generated.ID))
 	http.Redirect(w, r, fmt.Sprintf("/exercises/%d", generated.ID), http.StatusSeeOther)
+}
+
+func (a *app) importProblems(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Choose a valid JSON problem file (up to 1 MB)", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	problems, err := decodeProblems(file)
+	if err != nil {
+		http.Error(w, "Invalid problem JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	inserted, err := importProblems(a.db, problems)
+	if err != nil {
+		http.Error(w, "Could not import problems", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, fmt.Sprintf("/instructor?imported=%d", inserted), http.StatusSeeOther)
 }
 
 func (a *app) render(w http.ResponseWriter, name string, data any) {

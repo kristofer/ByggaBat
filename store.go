@@ -2,8 +2,22 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
 )
+
+type problemDefinition struct {
+	Title    string `json:"title"`
+	Level    string `json:"level"`
+	Week     int    `json:"week"`
+	Skill    string `json:"skill"`
+	Prompt   string `json:"prompt"`
+	Code     string `json:"code"`
+	Hint     string `json:"hint"`
+	Solution string `json:"solution"`
+}
 
 func createSchema(db *sql.DB) error {
 	_, err := db.Exec(`
@@ -234,4 +248,58 @@ print(python.enrollment_count(), maya.courses)`,
 		}
 	}
 	return tx.Commit()
+}
+
+func decodeProblems(reader io.Reader) ([]problemDefinition, error) {
+	decoder := json.NewDecoder(reader)
+	decoder.DisallowUnknownFields()
+	var problems []problemDefinition
+	if err := decoder.Decode(&problems); err != nil {
+		return nil, fmt.Errorf("decode problem JSON: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return nil, fmt.Errorf("problem JSON must contain a single array")
+	}
+	if len(problems) == 0 {
+		return nil, fmt.Errorf("problem JSON must contain at least one problem")
+	}
+	for i := range problems {
+		problem := &problems[i]
+		problem.Title = strings.TrimSpace(problem.Title)
+		problem.Level = strings.TrimSpace(problem.Level)
+		problem.Skill = strings.TrimSpace(problem.Skill)
+		if problem.Title == "" || problem.Level == "" || problem.Week < 1 ||
+			problem.Skill == "" || strings.TrimSpace(problem.Prompt) == "" ||
+			strings.TrimSpace(problem.Code) == "" || strings.TrimSpace(problem.Hint) == "" ||
+			strings.TrimSpace(problem.Solution) == "" {
+			return nil, fmt.Errorf("problem %d must include title, level, a positive week, skill, prompt, code, hint, and solution", i+1)
+		}
+	}
+	return problems, nil
+}
+
+func importProblems(db *sql.DB, problems []problemDefinition) (int, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	inserted := 0
+	for _, problem := range problems {
+		result, err := tx.Exec(`INSERT INTO exercises
+			(title, level, week, skill, prompt, code, hint, solution)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(title) DO NOTHING`,
+			problem.Title, problem.Level, problem.Week, problem.Skill,
+			problem.Prompt, problem.Code, problem.Hint, problem.Solution)
+		if err != nil {
+			return 0, fmt.Errorf("import %q: %w", problem.Title, err)
+		}
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
+		inserted += int(rows)
+	}
+	return inserted, tx.Commit()
 }
