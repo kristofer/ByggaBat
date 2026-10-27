@@ -60,6 +60,7 @@ func TestStudentAndInstructorViews(t *testing.T) {
 	studentPage, _ := io.ReadAll(studentResponse.Body)
 	if studentResponse.StatusCode != http.StatusOK ||
 		!strings.Contains(string(studentPage), "An empty ratings list") ||
+		!strings.Contains(string(studentPage), "Instructor mode") ||
 		strings.Contains(string(studentPage), "Check whether ratings is empty") {
 		t.Fatalf("student page missing exercise or leaked instructor hint")
 	}
@@ -97,6 +98,7 @@ func TestStudentAndInstructorViews(t *testing.T) {
 	defer instructorResponse.Body.Close()
 	instructorPage, _ := io.ReadAll(instructorResponse.Body)
 	if instructorResponse.StatusCode != http.StatusOK ||
+		!strings.Contains(string(instructorPage), "Act as student") ||
 		!strings.Contains(string(instructorPage), "Generate a flawed variant") ||
 		!strings.Contains(string(instructorPage), "Recent student activity") {
 		t.Fatal("instructor page is missing its exercise generator or activity view")
